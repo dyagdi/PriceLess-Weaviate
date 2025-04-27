@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Query
 from typing import List, Optional
-from weaviate_helper import semantic_search_for_relevant_data_objects 
+from weaviate_helper import semantic_search_for_relevant_data_objects , query_all_by_name
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -60,3 +60,35 @@ def search_products(
     except Exception as e:
         print(f"[ERROR] Search failed: {e}")
         return []
+
+
+class PriceHistoryItem(BaseModel):
+    name: str
+    price: float
+    date: str
+    market_name: Optional[str]
+
+@app.get("/price-history", response_model=List[PriceHistoryItem])
+def price_history(
+    name: str = Query(..., description="Product name to fetch price history for"),
+):
+    # Search only in SupermarketProducts
+    results = query_all_by_name("SupermarketProducts", name)
+    # Optionally, also search in SupermarketProducts2 and merge results
+    # results += query_all_by_name("SupermarketProducts2", name)
+
+    # Convert to list of dicts with only the fields you want
+    history = []
+    for obj in results:
+        props = obj.properties if hasattr(obj, 'properties') else obj
+        history.append({
+            "name": props.get("name"),
+            "price": props.get("price"),
+            "date": props.get("date"),
+            "market_name": props.get("market_name"),
+        })
+
+    # Sort by date
+    history.sort(key=lambda x: x["date"])
+
+    return history

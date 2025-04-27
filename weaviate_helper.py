@@ -109,3 +109,15 @@ def semantic_search_for_relevant_data_objects(collection_name, user_query, refer
     client.close()
     return response.objects
     
+
+def query_all_by_name(collection_name, product_name):
+    client = get_client()
+    collection = client.collections.get(collection_name)
+    
+    matched_objects = []
+    for obj in collection.iterator():
+        obj_name = obj.properties.get("name", "")
+        if obj_name == product_name:  # or obj_name.lower() == product_name.lower() for case-insensitive
+            matched_objects.append(obj)
+    client.close()
+    return matched_objects    
