@@ -72,10 +72,9 @@ class PriceHistoryItem(BaseModel):
 def price_history(
     name: str = Query(..., description="Product name to fetch price history for"),
 ):
-    # Search only in SupermarketProducts
+    # Search in both SupermarketProducts and SupermarketProducts2
     results = query_all_by_name("SupermarketProducts", name)
-    # Optionally, also search in SupermarketProducts2 and merge results
-    # results += query_all_by_name("SupermarketProducts2", name)
+    results += query_all_by_name("SupermarketProducts2", name)
 
     # Convert to list of dicts with only the fields you want
     history = []
