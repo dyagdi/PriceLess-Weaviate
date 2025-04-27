@@ -28,7 +28,7 @@ class ProductResponse(BaseModel):
 @app.get("/search", response_model=List[ProductResponse])
 def search_products(
     query: str = Query(..., description="Aranacak kelime"),
-    collection: str = Query("SupermarketProducts"),
+    collection: str = Query("SupermarketProducts2"),
     limit: int = Query(20, ge=1, le=20)
 ):
     try:

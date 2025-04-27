@@ -24,18 +24,18 @@ st.set_page_config(page_title="Market Product Uploader", layout="wide")
 st.title("🛒 Süpermarket Ürün Aktarıcı")
 
 market_tables = [
-    "migros_products",
-    "sokmarket_products",
-    "carrefour_products",
-    "marketpaketi_products",
-    "mopas_products",
+    "migros_2_products",
+    "sokmarket_2_products",
+    "carrefour_2_products",
+    "marketpaketi_2_products",
+    "mopas_2_products",
 
 
 ]
 
 selected_table = st.selectbox("🛍️ Hangi marketten ürünleri yüklemek istiyorsun?", market_tables)
 
-collection_name = st.text_input("🗂️ Weaviate Koleksiyon İsmi", value="SupermarketProducts")
+collection_name = st.text_input("🗂️ Weaviate Koleksiyon İsmi", value="SupermarketProducts2")
 
 if st.button("📥 Veritabanından Ürünleri Yükle ve Göster"):
 
