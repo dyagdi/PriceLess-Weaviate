@@ -1,0 +1,11 @@
+python-dotenv
+streamlit
+openpyxl
+instructor
+pydantic
+langchain
+langchain-openai
+langchain-community
+weaviate-client
+fastapi
+uvicorn
