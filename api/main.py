@@ -65,42 +65,31 @@ class PriceHistoryItem(BaseModel):
     date: str
     market_name: Optional[str]
 
+from datetime import date, datetime
+
 @app.get("/price-history", response_model=List[PriceHistoryItem])
 def price_history(
     name: str = Query(..., description="Product name to fetch price history for"),
 ):
-    try:
-        results = query_all_by_name("SupermarketProducts2", name)
-        results += query_all_by_name("SupermarketProducts3", name)
-        
-        history = []
-        for obj in results:
-            try:
-                props = obj.properties if hasattr(obj, 'properties') else obj
-                # Validate required fields
-                if not all(key in props for key in ["name", "price", "date"]):
-                    continue
-                    
-                # Ensure price is float
-                price = float(props.get("price"))
-                
-                history.append({
-                    "name": props.get("name"),
-                    "price": price,
-                    "date": props.get("date"),
-                    "market_name": props.get("market_name"),
-                })
-            except (ValueError, TypeError) as e:
-                # Skip invalid entries
-                continue
+    results = query_all_by_name("SupermarketProducts2", name)
+    results += query_all_by_name("SupermarketProducts3", name)
 
-        # Sort by date
-        history.sort(key=lambda x: x["date"])
-        
-        return history
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error fetching price history: {str(e)}"
-        )
+    history = []
+    for obj in results:
+        props = obj.properties if hasattr(obj, 'properties') else obj
+        raw_date = props.get("date")
+        # Convert date/datetime objects to ISO string
+        if isinstance(raw_date, (date, datetime)):
+            date_str = raw_date.isoformat()
+        else:
+            date_str = str(raw_date) if raw_date is not None else None
+
+        history.append({
+            "name": props.get("name"),
+            "price": props.get("price"),
+            "date": date_str,
+            "market_name": props.get("market_name"),
+        })
+
+    history.sort(key=lambda x: x["date"] or "")
+    return history
