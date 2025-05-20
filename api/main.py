@@ -1,3 +1,4 @@
+from http.client import HTTPException
 from fastapi import FastAPI, Query
 from typing import List, Optional
 from weaviate_helper import semantic_search_for_relevant_data_objects , query_all_by_name
@@ -68,20 +69,38 @@ class PriceHistoryItem(BaseModel):
 def price_history(
     name: str = Query(..., description="Product name to fetch price history for"),
 ):
-    results = query_all_by_name("SupermarketProducts2", name)
-    results += query_all_by_name("SupermarketProducts3", name)
-    
+    try:
+        results = query_all_by_name("SupermarketProducts2", name)
+        results += query_all_by_name("SupermarketProducts3", name)
+        
+        history = []
+        for obj in results:
+            try:
+                props = obj.properties if hasattr(obj, 'properties') else obj
+                # Validate required fields
+                if not all(key in props for key in ["name", "price", "date"]):
+                    continue
+                    
+                # Ensure price is float
+                price = float(props.get("price"))
+                
+                history.append({
+                    "name": props.get("name"),
+                    "price": price,
+                    "date": props.get("date"),
+                    "market_name": props.get("market_name"),
+                })
+            except (ValueError, TypeError) as e:
+                # Skip invalid entries
+                continue
 
-    history = []
-    for obj in results:
-        props = obj.properties if hasattr(obj, 'properties') else obj
-        history.append({
-            "name": props.get("name"),
-            "price": props.get("price"),
-            "date": props.get("date"),
-            "market_name": props.get("market_name"),
-        })
-
-    history.sort(key=lambda x: x["date"])
-
-    return history
+        # Sort by date
+        history.sort(key=lambda x: x["date"])
+        
+        return history
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching price history: {str(e)}"
+        )
