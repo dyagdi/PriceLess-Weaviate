@@ -68,9 +68,9 @@ class PriceHistoryItem(BaseModel):
 def price_history(
     name: str = Query(..., description="Product name to fetch price history for"),
 ):
-    results = query_all_by_name("SupermarketProducts", name)
-    results += query_all_by_name("SupermarketProducts2", name)
+    results = query_all_by_name("SupermarketProducts2", name)
     results += query_all_by_name("SupermarketProducts3", name)
+    
 
     history = []
     for obj in results:
