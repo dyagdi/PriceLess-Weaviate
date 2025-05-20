@@ -24,28 +24,35 @@ st.set_page_config(page_title="Market Product Uploader", layout="wide")
 st.title("🛒 Süpermarket Ürün Aktarıcı")
 
 market_tables = [
-    "migros_2_products",
-    "sokmarket_2_products",
-    "carrefour_2_products",
-    "marketpaketi_2_products",
-    "mopas_2_products",
-
-
+    "migros_products",
+    "sokmarket_products",
+    "carrefour_products",
+    "marketpaketi_products",
+    "mopas_products",
+  
 ]
 
+"""
+    "migros_3_products",
+    "sokmarket_3_products",
+    "carrefour_3_products",
+    "marketpaketi_3_products",
+    "mopas_3_products",
+    "a101_3_products",
+]
+"""
 selected_table = st.selectbox("🛍️ Hangi marketten ürünleri yüklemek istiyorsun?", market_tables)
 
 collection_name = st.text_input("🗂️ Weaviate Koleksiyon İsmi", value="SupermarketProducts2")
 
 if st.button("📥 Veritabanından Ürünleri Yükle ve Göster"):
-
     with st.spinner(f"{selected_table} tablosundan ürünler alınıyor..."):
         conn = get_pg_connection()
         cursor = conn.cursor()
 
         cursor.execute(f"""
-            SELECT id, main_category, sub_category, lowest_category, name, price, high_price, 
-                   in_stock, product_link, page_link, image_url, date, market_name
+            SELECT main_category, name, price, high_price, 
+                   product_link, image_url, date, market_name
             FROM {selected_table}
         """) 
 
@@ -56,28 +63,28 @@ if st.button("📥 Veritabanından Ürünleri Yükle ve Göster"):
             st.success(f"{len(rows)} ürün yüklendi ({selected_table}).")
 
             df = pd.DataFrame(rows, columns=[
-                "id", "main_category", "sub_category", "lowest_category", "name", "price", "high_price",
-                "in_stock", "product_link", "page_link", "image_url", "date", "market_name"
+                "main_category", "name", "price", "high_price",
+                "product_link", "image_url", "date", "market_name"
             ])
             st.dataframe(df.head(20), use_container_width=True)
 
-            product_objects = [
-                ProductObject(
-                    id=row[0],
-                    main_category=row[1],
-                    sub_category=row[2],
-                    lowest_category=row[3],
-                    name=row[4],
-                    price=row[5],
-                    high_price=row[6],
-                    in_stock=row[7],
-                    product_link=row[8],
-                    page_link=row[9],
-                    image_url=row[10],
-                    date=row[11],
-                    market_name=row[12]
-                ) for row in rows
-            ]
+            product_objects = []
+            for row in rows:
+                try:
+                    product = ProductObject(
+                        main_category=row[0],
+                        name=row[1],
+                        price=row[2],
+                        high_price=row[3],
+                        product_link=row[4],
+                        image_url=row[5],
+                        date=row[6],
+                        market_name=row[7] if row[7] is not None else None
+                    )
+                    product_objects.append(product)
+                except Exception as e:
+                    st.error(f"Error creating product object: {str(e)}")
+                    continue
 
             st.session_state.product_objects = product_objects
         else:

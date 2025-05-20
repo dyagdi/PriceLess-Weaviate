@@ -16,8 +16,6 @@ app.add_middleware(
 )
 class ProductResponse(BaseModel):
     main_category: Optional[str]
-    sub_category: Optional[str]
-    lowest_category: Optional[str]
     name: Optional[str]
     price: Optional[float]
     high_price: Optional[float]
@@ -28,7 +26,7 @@ class ProductResponse(BaseModel):
 @app.get("/search", response_model=List[ProductResponse])
 def search_products(
     query: str = Query(..., description="Aranacak kelime"),
-    collection: str = Query("SupermarketProducts2"),
+    collection: str = Query("SupermarketProducts3"),
     limit: int = Query(20, ge=1, le=20)
 ):
     try:
@@ -45,8 +43,6 @@ def search_products(
 
             response_data.append({
                 "main_category": props.get("main_category"),
-                "sub_category": props.get("sub_category"),
-                "lowest_category": props.get("lowest_category"),
                 "name": props.get("name"),
                 "price": props.get("price"),
                 "high_price": props.get("high_price"),
@@ -72,11 +68,10 @@ class PriceHistoryItem(BaseModel):
 def price_history(
     name: str = Query(..., description="Product name to fetch price history for"),
 ):
-    # Search in both SupermarketProducts and SupermarketProducts2
     results = query_all_by_name("SupermarketProducts", name)
     results += query_all_by_name("SupermarketProducts2", name)
+    results += query_all_by_name("SupermarketProducts3", name)
 
-    # Convert to list of dicts with only the fields you want
     history = []
     for obj in results:
         props = obj.properties if hasattr(obj, 'properties') else obj
@@ -87,7 +82,6 @@ def price_history(
             "market_name": props.get("market_name"),
         })
 
-    # Sort by date
     history.sort(key=lambda x: x["date"])
 
     return history

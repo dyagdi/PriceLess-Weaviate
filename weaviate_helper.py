@@ -2,25 +2,22 @@ from weaviate.classes.query import MetadataQuery, Filter, Rerank
 import requests
 import json
 from client_connector import get_client
+from collection_creator import adjust_first_letter_of_collection_name
 
 
 def get_data_objects_for_given_collection(collection_name):
+    collection_name = adjust_first_letter_of_collection_name(collection_name)
     client = get_client()
     collection = client.collections.get(collection_name)
     
     data_objects = []
     for obj in collection.iterator():
         data_object = {
-            "id": obj.id,
             "main_category": obj.properties.get("main_category", ""),
-            "sub_category": obj.properties.get("sub_category", ""),
-            "lowest_category": obj.properties.get("lowest_category", ""),
             "name": obj.properties.get("name", ""),
             "price": obj.properties.get("price", ""),
             "high_price": obj.properties.get("high_price", ""),
-            "in_stock": obj.properties.get("in_stock", ""),
             "product_link": obj.properties.get("product_link", ""),
-            "page_link": obj.properties.get("page_link", ""),
             "image_url": obj.properties.get("image_url", ""),
             "date": obj.properties.get("date", ""),
             "market_name": obj.properties.get("market_name", ""),
@@ -41,6 +38,7 @@ def get_collection_names():
 
 
 def get_collection(collection_name):
+    collection_name = adjust_first_letter_of_collection_name(collection_name)
     client = get_client()
  
     collection = client.collections.get(collection_name)
@@ -61,6 +59,7 @@ def get_list_of_collections():
 
 
 def delete_collection(collection_name):
+    collection_name = adjust_first_letter_of_collection_name(collection_name)
     client = get_client()
 
     client.collections.delete(collection_name)
@@ -73,7 +72,7 @@ def delete_collection(collection_name):
 
 
 def add_data_to_collection(collection_name, data):
-
+    collection_name = adjust_first_letter_of_collection_name(collection_name)
     client = get_client()
 
     selected_collection = client.collections.get(collection_name)
@@ -97,6 +96,7 @@ def semantic_search_for_relevant_data_objects(collection_name, user_query, refer
     if not user_query:
         raise ValueError("Query must not be None")
 
+    collection_name = adjust_first_letter_of_collection_name(collection_name)
     client = get_client()
     selected_collection = client.collections.get(collection_name)
 
@@ -111,13 +111,14 @@ def semantic_search_for_relevant_data_objects(collection_name, user_query, refer
     
 
 def query_all_by_name(collection_name, product_name):
+    collection_name = adjust_first_letter_of_collection_name(collection_name)
     client = get_client()
     collection = client.collections.get(collection_name)
     
     matched_objects = []
     for obj in collection.iterator():
         obj_name = obj.properties.get("name", "")
-        if obj_name == product_name:  # or obj_name.lower() == product_name.lower() for case-insensitive
+        if obj_name == product_name:  
             matched_objects.append(obj)
     client.close()
     return matched_objects    
