@@ -1,7 +1,7 @@
 from http.client import HTTPException
 from fastapi import FastAPI, Query
 from typing import List, Optional
-from weaviate_helper import semantic_search_for_relevant_data_objects , query_all_by_name
+from weaviate_helper import semantic_search_for_relevant_data_objects , query_all_by_name, get_data_objects_for_given_collection
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -93,3 +93,53 @@ def price_history(
 
     history.sort(key=lambda x: x["date"] or "")
     return history
+
+@app.get("/chatbot/products", response_model=List[ProductResponse])
+def get_products_for_chatbot(
+    collection: str = Query("SupermarketProducts3", description="Collection name to fetch products from"),
+    offset: int = Query(0, ge=0, description="Number of products to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of products to return")
+):
+    """
+    Endpoint for chatbot service to get all products from a given collection
+    with pagination support for better performance
+    """
+    try:
+        # Get all objects from the collection
+        all_objects = get_data_objects_for_given_collection(collection)
+        
+        # Apply pagination
+        total_count = len(all_objects)
+        paginated_objects = all_objects[offset:offset + limit]
+        
+        response_data = []
+        for obj in paginated_objects:
+            response_data.append({
+                "main_category": obj.get("main_category"),
+                "name": obj.get("name"),
+                "price": obj.get("price"),
+                "high_price": obj.get("high_price"),
+                "market_name": obj.get("market_name"),
+                "product_link": obj.get("product_link"),
+                "image_url": obj.get("image_url")
+            })
+
+        print(f"[INFO] Chatbot endpoint: Retrieved {len(response_data)} products (offset: {offset}, limit: {limit}, total: {total_count})")
+        return response_data
+
+    except Exception as e:
+        print(f"[ERROR] Chatbot products endpoint failed: {e}")
+        return []
+
+@app.get("/chatbot/collections")
+def get_available_collections():
+    """
+    Endpoint for chatbot to get list of available collections
+    """
+    try:
+        from weaviate_helper import get_collection_names
+        collections = get_collection_names()
+        return {"collections": collections}
+    except Exception as e:
+        print(f"[ERROR] Get collections failed: {e}")
+        return {"collections": []}
